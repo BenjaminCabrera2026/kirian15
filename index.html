@@ -1,6 +1,16 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+<meta property="og:type" content="website">
+<meta property="og:title" content="Invitación de XV - Kirian">
+<meta property="og:description" content="Una historia mágica te espera ✨">
+<meta property="og:image" content="https://InvitacióndeXV.com/preview-kirian.jpg">
+<meta property="og:url" content="https://InvitacióndeXV.com/kirian.html">
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Invitación de XV - Kirian">
+<meta name="twitter:description" content="Una historia mágica te espera ✨">
+<meta name="twitter:image" content="https://InvitacióndeXV.com/preview-kirian.jpg">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>Invitación Quinceañera - KIRIAN</title>
@@ -527,16 +537,7 @@ function scheduleMusic(){
   setTimeout(()=>{if(musicPlaying){stopMusic(false);scheduleMusic();}},totalDur-500);
 }
 
-function startMusic(){
-  initAudio();
-  if(audioCtx.state==='suspended')audioCtx.resume();
-  musicPlaying=true;
-  masterGain.gain.value=0;
-  masterGain.gain.linearRampToValueAtTime(.38,audioCtx.currentTime+1.5);
-  scheduleMusic();
-  document.getElementById('musicBtn').textContent='🎵';
-  document.getElementById('musicBtn').classList.add('playing');
-}
+
 
 function stopMusic(full=true){
   musicNodes.forEach(n=>{try{n.stop();}catch(e){}});
@@ -630,15 +631,37 @@ window.addEventListener('load',()=>{
   scheduleNext();
 });
 
-// Music on first click (browser policy)
-document.addEventListener('click',function startOnInteract(){
-  if(!musicPlaying)startMusic();
-  document.removeEventListener('click',startOnInteract);
-},{once:true});
 
-window.addEventListener('load',()=>{
-  setTimeout(()=>{try{startMusic();}catch(e){}},300);
-});
+<script>
+const music = document.getElementById("music");
+
+function startMusicOnce() {
+  music.play().catch(() => {});
+  document.removeEventListener("click", startMusicOnce);
+  document.removeEventListener("touchstart", startMusicOnce);
+}
+
+document.addEventListener("click", startMusicOnce);
+document.addEventListener("touchstart", startMusicOnce);
+</script>
+
+<audio id="music" autoplay loop playsinline>
+  <source src="perfect.mp3" type="audio/mpeg">
+</audio>
+
+<script>
+  const music = document.getElementById('music');
+
+  function startMusic() {
+    if (music) {
+      music.play().catch(() => {});
+    }
+    document.removeEventListener('click', startMusic);
+    document.removeEventListener('touchstart', startMusic);
+  }
+
+  document.addEventListener('click', startMusic, { once: true });
+  document.addEventListener('touchstart', startMusic, { once: true });
 </script>
 </body>
 </html>
