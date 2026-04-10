@@ -430,7 +430,7 @@
   </div>
 
   <!-- Music button -->
-  <button class="music-btn playing" id="musicBtn" onclick="toggleMusic()" title="Música">🎵</button>
+ <button class="music-btn" id="musicBtn" onclick="toggleMusic()" title="Música">🔇</button>
 
   <!-- Tap hint -->
   <div class="tap-hint">toca para avanzar</div>
@@ -456,7 +456,7 @@
 </div>
 
 <audio id="music" loop playsinline preload="auto">
-  <source src="Perfect.mp3" type="audio/mpeg">
+  <source src="perfect.mp3" type="audio/mpeg">
 </audio>
 
 <script>
@@ -579,9 +579,18 @@ document.getElementById('phoneFrame').addEventListener('click',function(e){
 
 // Inicia slideshow al cargar
 window.addEventListener('load',()=>{
+  updateMusicUI();
   scheduleNext();
-  startMusic(); // intentará reproducir de inmediato si el navegador lo permite
 });
+
+  function startMusicFromUserGesture(){
+  startMusic();
+  document.removeEventListener('click', startMusicFromUserGesture);
+  document.removeEventListener('touchstart', startMusicFromUserGesture);
+}
+
+document.addEventListener('click', startMusicFromUserGesture, { once:true });
+document.addEventListener('touchstart', startMusicFromUserGesture, { once:true });
 
 // Respaldo para móviles / WhatsApp: primer toque activa la música
 function startMusicOnFirstInteraction(){
