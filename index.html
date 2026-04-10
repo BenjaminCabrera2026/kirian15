@@ -592,14 +592,7 @@ window.addEventListener('load',()=>{
 document.addEventListener('click', startMusicFromUserGesture, { once:true });
 document.addEventListener('touchstart', startMusicFromUserGesture, { once:true });
 
-// Respaldo para móviles / WhatsApp: primer toque activa la música
-function startMusicOnFirstInteraction(){
-  startMusic();
-  document.removeEventListener('click', startMusicOnFirstInteraction);
-  document.removeEventListener('touchstart', startMusicOnFirstInteraction);
-}
-document.addEventListener('click', startMusicOnFirstInteraction, {once:true});
-document.addEventListener('touchstart', startMusicOnFirstInteraction, {once:true});
+
 </script>
 </body>
 </html>
