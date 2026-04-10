@@ -455,110 +455,58 @@
 
 </div>
 
+<audio id="music" loop playsinline preload="auto">
+  <source src="perfect.mp3" type="audio/mpeg">
+</audio>
+
 <script>
-// ── MUSIC ENGINE ──
-let audioCtx=null,musicPlaying=false,musicNodes=[],masterGain=null;
-const TEMPO_BPM=72, BEAT=60/TEMPO_BPM;
-
-const melody=[
-  [587.33,1.5,.9],[698.46,.5,.7],[783.99,1,.85],[659.25,1,.8],[587.33,1,.9],[523.25,2,.7],
-  [659.25,1.5,.9],[783.99,.5,.7],[880,1,.85],[783.99,1,.8],[698.46,1,.9],[587.33,2,.7],
-  [783.99,1,.95],[880,1,.9],[987.77,1,.85],[1046.5,1.5,.9],[987.77,.5,.7],[880,1,.85],[783.99,2,.75],
-  [698.46,1.5,.9],[783.99,.5,.7],[659.25,1,.85],[587.33,1,.8],[523.25,1,.9],[440,3,.65],
-  [587.33,1,.8],[659.25,1,.85],[698.46,1,.9],[783.99,1.5,.95],[698.46,.5,.7],[659.25,1,.85],[587.33,2,.75],
-  [987.77,1.5,1],[880,.5,.8],[783.99,1,.9],[698.46,1,.85],[659.25,1,.9],[587.33,3,.7],
-  [523.25,1,.7],[587.33,1,.8],[659.25,1,.85],[698.46,2,.9],[587.33,1,.75],[440,4,.55],
-];
-const bassChords=[
-  [[293.66,220],3],[[293.66,220],3],[[196,246.94],3],[[293.66,220],3],
-  [[293.66,220],3],[[196,246.94],3],[[349.23,261.63],3],[[293.66,220],3],
-  [[293.66,220],3],[[261.63,196],3],[[220,277.18],3],[[293.66,220],3],
-];
-
-function initAudio(){
-  if(audioCtx)return;
-  audioCtx=new(window.AudioContext||window.webkitAudioContext)();
-  masterGain=audioCtx.createGain();
-  masterGain.gain.value=0.38;
-  masterGain.connect(audioCtx.destination);
-}
-
-function playNote(freq,startTime,duration,vol){
-  const osc=audioCtx.createOscillator(),gain=audioCtx.createGain();
-  const rev=audioCtx.createDelay(),revG=audioCtx.createGain();
-  rev.delayTime.value=0.06;revG.gain.value=0.18;
-  osc.connect(gain);gain.connect(masterGain);
-  osc.connect(rev);rev.connect(revG);revG.connect(masterGain);
-  osc.type='sine';osc.frequency.setValueAtTime(freq,startTime);
-  const vib=audioCtx.createOscillator(),vibG=audioCtx.createGain();
-  vib.frequency.value=5.5;vibG.gain.value=freq*.008;
-  vib.connect(vibG);vibG.connect(osc.frequency);
-  vib.start(startTime+.15);vib.stop(startTime+duration);
-  gain.gain.setValueAtTime(0,startTime);
-  gain.gain.linearRampToValueAtTime(vol*.5,startTime+.04);
-  gain.gain.setValueAtTime(vol*.5,startTime+duration-.08);
-  gain.gain.exponentialRampToValueAtTime(.001,startTime+duration);
-  osc.start(startTime);osc.stop(startTime+duration+.05);
-  musicNodes.push(osc,vib);
-}
-
-function playBass(freqs,startTime,duration){
-  freqs.forEach(f=>{
-    const osc=audioCtx.createOscillator(),gain=audioCtx.createGain();
-    osc.connect(gain);gain.connect(masterGain);
-    osc.type='triangle';osc.frequency.value=f;
-    gain.gain.setValueAtTime(0,startTime);
-    gain.gain.linearRampToValueAtTime(.12,startTime+.03);
-    gain.gain.exponentialRampToValueAtTime(.001,startTime+duration*.8);
-    osc.start(startTime);osc.stop(startTime+duration);
-    musicNodes.push(osc);
-  });
-}
-
-function scheduleMusic(){
-  if(!audioCtx)return;
-  const startT=audioCtx.currentTime+.1;
-  let t=startT;
-  melody.forEach(([freq,beats,vol])=>{playNote(freq,t,beats*BEAT*.88,vol);t+=beats*BEAT;});
-  let bt=startT;
-  const totalBeats=melody.reduce((s,[,b])=>s+b,0);
-  const totalBars=Math.ceil(totalBeats/3);
-  for(let i=0;i<totalBars;i++){
-    const chord=bassChords[i%bassChords.length][0];
-    const bd=BEAT*3;
-    playBass(chord,bt,bd*.9);
-    playBass([chord[0]*2],bt,BEAT*.4);
-    bt+=bd;
-  }
-  const endT=t;
-  masterGain.gain.setValueAtTime(.38,endT-2);
-  masterGain.gain.linearRampToValueAtTime(0,endT);
-  const totalDur=(endT-startT)*1000;
-  setTimeout(()=>{if(musicPlaying){stopMusic(false);scheduleMusic();}},totalDur-500);
-}
-
-
-
-function stopMusic(full=true){
-  musicNodes.forEach(n=>{try{n.stop();}catch(e){}});
-  musicNodes=[];
-  if(full){
-    musicPlaying=false;
-    document.getElementById('musicBtn').textContent='🔇';
-    document.getElementById('musicBtn').classList.remove('playing');
-  }
-}
-
-function toggleMusic(){
-  musicPlaying?stopMusic(true):startMusic();
-}
-
-// ── SLIDESHOW ENGINE ──
+// ── MUSIC + SLIDESHOW ENGINE (DEPURADO) ──
 let currentScene=0;
 const totalScenes=7;
 let autoTimer=null;
 let isAuto=true;
 const sceneDurations=[5000,5000,7000,7000,7000,7000,7000];
+
+const bgMusic=document.getElementById('music');
+const musicBtn=document.getElementById('musicBtn');
+let musicPlaying=false;
+
+function updateMusicUI(){
+  if(!musicBtn) return;
+  musicBtn.textContent = musicPlaying ? '🎵' : '🔇';
+  musicBtn.classList.toggle('playing', musicPlaying);
+}
+
+function startMusic(){
+  if(!bgMusic) return;
+  bgMusic.volume = 1;
+  bgMusic.play().then(()=>{
+    musicPlaying=true;
+    updateMusicUI();
+  }).catch(()=>{
+    musicPlaying=false;
+    updateMusicUI();
+  });
+}
+
+function stopMusic(reset=false){
+  if(!bgMusic) return;
+  bgMusic.pause();
+  if(reset){
+    try{ bgMusic.currentTime = 0; }catch(e){}
+  }
+  musicPlaying=false;
+  updateMusicUI();
+}
+
+function toggleMusic(){
+  if(!bgMusic) return;
+  if(bgMusic.paused){
+    startMusic();
+  }else{
+    stopMusic(false);
+  }
+}
 
 function showScene(n){
   document.querySelectorAll('.scene').forEach((s,i)=>{
@@ -571,28 +519,29 @@ function showScene(n){
 }
 
 function scheduleNext(){
-  if(autoTimer)clearTimeout(autoTimer);
-  if(isAuto)autoTimer=setTimeout(()=>{nextScene();scheduleNext();},sceneDurations[currentScene]);
+  if(autoTimer) clearTimeout(autoTimer);
+  if(isAuto) autoTimer=setTimeout(()=>{nextScene();scheduleNext();},sceneDurations[currentScene]);
 }
 
-function nextScene(){showScene((currentScene+1)%totalScenes);}
-function prevScene(){showScene((currentScene-1+totalScenes)%totalScenes);}
+function nextScene(){ showScene((currentScene+1)%totalScenes); }
+function prevScene(){ showScene((currentScene-1+totalScenes)%totalScenes); }
 
 function manualNext(){
-  if(autoTimer)clearTimeout(autoTimer);
+  if(autoTimer) clearTimeout(autoTimer);
   nextScene();
-  if(isAuto)scheduleNext();
+  if(isAuto) scheduleNext();
 }
 
 function manualPrev(){
-  if(autoTimer)clearTimeout(autoTimer);
+  if(autoTimer) clearTimeout(autoTimer);
   prevScene();
-  if(isAuto)scheduleNext();
+  if(isAuto) scheduleNext();
 }
 
 function toggleAuto(){
   isAuto=!isAuto;
   const btn=document.getElementById('autoBtn');
+  if(!btn) return;
   if(isAuto){
     btn.textContent='⏸ AUTO';
     btn.classList.add('active-auto');
@@ -600,13 +549,14 @@ function toggleAuto(){
   }else{
     btn.textContent='▶ AUTO';
     btn.classList.remove('active-auto');
-    if(autoTimer)clearTimeout(autoTimer);
+    if(autoTimer) clearTimeout(autoTimer);
   }
 }
 
 function spawnParticles(sn){
   const c=document.getElementById('p'+sn);
-  if(!c)return;c.innerHTML='';
+  if(!c) return;
+  c.innerHTML='';
   for(let i=0;i<22;i++){
     const p=document.createElement('div');
     p.className='particle';
@@ -616,52 +566,31 @@ function spawnParticles(sn){
 }
 
 spawnParticles(1);
+updateMusicUI();
 
 // Tap to advance
 document.getElementById('phoneFrame').addEventListener('click',function(e){
   if(!e.target.closest('.music-btn')&&!e.target.closest('.controls')&&!e.target.closest('.progress-dots')){
-    if(autoTimer)clearTimeout(autoTimer);
+    if(autoTimer) clearTimeout(autoTimer);
     nextScene();
-    if(isAuto)scheduleNext();
+    if(isAuto) scheduleNext();
   }
 });
 
-// AUTO-START on load
+// Inicia slideshow al cargar
 window.addEventListener('load',()=>{
   scheduleNext();
+  startMusic(); // intentará reproducir de inmediato si el navegador lo permite
 });
 
-
-<script>
-const music = document.getElementById("music");
-
-function startMusicOnce() {
-  music.play().catch(() => {});
-  document.removeEventListener("click", startMusicOnce);
-  document.removeEventListener("touchstart", startMusicOnce);
+// Respaldo para móviles / WhatsApp: primer toque activa la música
+function startMusicOnFirstInteraction(){
+  startMusic();
+  document.removeEventListener('click', startMusicOnFirstInteraction);
+  document.removeEventListener('touchstart', startMusicOnFirstInteraction);
 }
-
-document.addEventListener("click", startMusicOnce);
-document.addEventListener("touchstart", startMusicOnce);
-</script>
-
-<audio id="music" autoplay loop playsinline>
-  <source src="perfect.mp3" type="audio/mpeg">
-</audio>
-
-<script>
-  const music = document.getElementById('music');
-
-  function startMusic() {
-    if (music) {
-      music.play().catch(() => {});
-    }
-    document.removeEventListener('click', startMusic);
-    document.removeEventListener('touchstart', startMusic);
-  }
-
-  document.addEventListener('click', startMusic, { once: true });
-  document.addEventListener('touchstart', startMusic, { once: true });
+document.addEventListener('click', startMusicOnFirstInteraction, {once:true});
+document.addEventListener('touchstart', startMusicOnFirstInteraction, {once:true});
 </script>
 </body>
 </html>
